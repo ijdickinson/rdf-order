@@ -43,26 +43,7 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
  *   <li>
  *   </ul>
  * </li>
- * <li>Two typed literals with different dataypes are ordered according to the following order: types
- *     appearing earlier in the following list appear before later types when comparing literals
- *     with those types
- *   <ul>
- *   <li>Boolean (i.e. <code>xsd:boolean</code>)</li>
- *   <li>byte (i.e. <code>xsd:byte</code>)</li>
- *   <li>short integer (i.e. <code>xsd:short</code>)</li>
- *   <li>int (i.e. <code>xsd:int</code>)</li>
- *   <li>long (i.e. <code>xsd:long</code>)</li>
- *   <li>integer (i.e. <code>xsd:integer</code>)</li>
- *   <li>decimal (i.e. <code>xsd:decimal</code>)</li>
- *   <li>float (i.e. <code>xsd:float</code>)</li>
- *   <li>double (i.e. <code>xsd:double</code>)</li>
- *   <li>time (i.e. <code>xsd:time</code>)</li>
- *   <li>date (i.e. <code>xsd:date</code>)</li>
- *   <li>date-time (i.e. <code>xsd:dateTime</code>)</li>
- *   <li>other datatype pairs will be sorted according to a lexical comparison of the datatype URI</li>
- *   </ul>
- * </li>
- * <li>Two typed literals with identical dataypes, where the datatype appears in the following list,
+ * <li>Two typed literals with identical datatypes, where the datatype appears in the following list,
  *     are ordered by value (e.g for <code>xsd:int</code> values, smaller integers will appear earlier
  *     in the ordering than larger integers). For other datatypes not listed below, the values are ordered
  *     according to a lexical comparison of the string-form of the data value.
@@ -114,7 +95,7 @@ public class RDFNodeStandardOrder
     /***********************************/
 
     @Override
-    public int compareTo( RDFNode o ) {
+    public int compare( RDFNode o1, RDFNode o2 ) {
         // TODO Auto-generated method stub
         return 0;
     }

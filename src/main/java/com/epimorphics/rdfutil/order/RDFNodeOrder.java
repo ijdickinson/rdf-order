@@ -17,6 +17,8 @@ package com.epimorphics.rdfutil.order;
 ///////////////
 
 
+import java.util.Comparator;
+
 import com.hp.hpl.jena.rdf.model.*;
 
 /**
@@ -25,7 +27,7 @@ import com.hp.hpl.jena.rdf.model.*;
  * @author Ian Dickinson, Epimorphics (mailto:ian@epimorphics.com)
  */
 public interface RDFNodeOrder
-    extends Comparable<RDFNode>
+    extends Comparator<RDFNode>
 {
     /***********************************/
     /* Constants                       */
