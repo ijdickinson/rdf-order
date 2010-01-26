@@ -19,7 +19,7 @@ package com.epimorphics.rdfutil.order;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.*;
 
 /**
  * <p>Standard ordering for {@link RDFNode}s. The ordering is defined as follows:</p>
@@ -96,13 +96,71 @@ public class RDFNodeStandardOrder
 
     @Override
     public int compare( RDFNode o1, RDFNode o2 ) {
-        // TODO Auto-generated method stub
-        return 0;
+        if (o1.isResource()) {
+            if (o2.isResource()) {
+                return compareResources( (Resource) o1, (Resource) o2 );
+            }
+            else {
+                // o1 is a resource, o2 is a literal
+                return -1;
+            }
+        }
+        else {
+            if (o2.isResource()) {
+                // o2 is a resource, but o1 is a literal
+                return 1;
+            }
+            else {
+                return compareLiterals( (Literal) o1, (Literal) o2 );
+            }
+        }
     }
 
     /***********************************/
     /* Internal implementation methods */
     /***********************************/
+
+    /**
+     * Determine the ordering between two {@link Resource}s
+     * @param r1 The first resource to compare
+     * @param r2 The second resource to compare
+     * @return less than zero if r1 precedes r2 in the order
+     */
+    protected int compareResources( Resource r1, Resource r2 ) {
+        if (r1.isAnon()) {
+            return r2.isAnon() ? compareAnonymousResources( r1, r2 ) : -1;
+        }
+        else {
+            return r2.isAnon() ? 1 : compareURIResources( r1, r2 );
+        }
+    }
+
+    /**
+     * Determine the ordering between two named resources
+     * @param r1
+     * @param r2
+     * @return An ordering based on the lexical comparison of the URI's of
+     * r1 and r2
+     */
+    private int compareURIResources( Resource r1, Resource r2 ) {
+        return r1.getURI().compareTo( r2.getURI() );
+    }
+
+    /**
+     * Determine the ordering between two bNodes
+     * @param r1
+     * @param r2
+     * @return An ordering based on the lexical comparison of the anonID's of
+     * r1 and r2
+     */
+    protected int compareAnonymousResources( Resource r1, Resource r2 ) {
+        return r1.getId().getLabelString().compareTo( r2.getId().getLabelString() );
+    }
+
+    protected int compareLiterals( Literal l1, Literal l2 ) {
+        return 0;
+    }
+
 
     /***********************************/
     /* Inner class definitions         */
