@@ -215,7 +215,7 @@ public class RDFNodeStandardOrderTest
     @Test
     public void testCompare10f() {
         long v0 = 3;
-        long v1 = 20;
+        long v1 = 200000000;
         l0 = m.createTypedLiteral( v0, XSDDatatype.XSDinteger );
         l1 = m.createTypedLiteral( v1, XSDDatatype.XSDinteger );
         assertTrue( "xsd:integers are ordered by value", rnso.compare( l0, l1 ) < 0 );
@@ -225,7 +225,7 @@ public class RDFNodeStandardOrderTest
     @Test
     public void testCompare10g() {
         long v0 = 3;
-        long v1 = 20;
+        long v1 = 20000000000L;
         l0 = m.createTypedLiteral( v0, XSDDatatype.XSDdecimal );
         l1 = m.createTypedLiteral( v1, XSDDatatype.XSDdecimal );
         assertTrue( "xsd:decimals are ordered by value", rnso.compare( l0, l1 ) < 0 );
@@ -270,8 +270,8 @@ public class RDFNodeStandardOrderTest
 
     @Test
     public void testCompare10l() {
-        l0 = m.createTypedLiteral( "2009-01-18T12:00", XSDDatatype.XSDdateTime );
-        l1 = m.createTypedLiteral( "2009-01-18T13:00", XSDDatatype.XSDdateTime );
+        l0 = m.createTypedLiteral( "2009-01-18T12:00:00", XSDDatatype.XSDdateTime );
+        l1 = m.createTypedLiteral( "2009-01-18T13:00:00", XSDDatatype.XSDdateTime );
         assertTrue( "xsd:times are ordered by value", rnso.compare( l0, l1 ) < 0 );
         assertTrue( "xsd:times are ordered by value", rnso.compare( l1, l0 ) > 0 );
     }

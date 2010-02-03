@@ -16,9 +16,14 @@ package com.epimorphics.rdfutil.order;
 // Imports
 ///////////////
 
+import java.math.BigDecimal;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hp.hpl.jena.datatypes.RDFDatatype;
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
+import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
 import com.hp.hpl.jena.rdf.model.*;
 
 /**
@@ -157,8 +162,166 @@ public class RDFNodeStandardOrder
         return r1.getId().getLabelString().compareTo( r2.getId().getLabelString() );
     }
 
+    /**
+     * Determine the ordering between two arbitrary literals
+     * @param l1
+     * @param l2
+     * @return Less than zero if l1 should precede l2 in the order
+     */
     protected int compareLiterals( Literal l1, Literal l2 ) {
-        return 0;
+        if (l1.getDatatype() != null) {
+            return (l2.getDatatype() != null) ? compareTypedLiterals( l1, l2 ) : -1;
+        }
+        else {
+            return (l2.getDatatype() != null) ? 1 : compareUntypedLiterals( l1, l2 );
+        }
+    }
+
+    /**
+     * Determine the order between two untyped literals, which may or may not have
+     * language tags
+     *
+     * @param l1 An untyped literal
+     * @param l2 An untyped literal
+     * @return Less than zero if l1 should precede l2 in the order
+     */
+    protected int compareUntypedLiterals( Literal l1, Literal l2 ) {
+        int compare = l1.getLexicalForm().compareTo( l2.getLexicalForm() );
+        if (compare != 0) {
+            return compare;
+        }
+        else {
+            // the literal values are the same, use lang tags to disambiguate
+            if (hasLangTag( l1 )) {
+                if (hasLangTag( l2 )) {
+                    // both have lang tags
+                    return l1.getLanguage().compareTo( l2.getLanguage() );
+                }
+                else {
+                    return -1;
+                }
+            }
+            else {
+                return (hasLangTag( l2 )) ? 1 : 0;
+            }
+        }
+    }
+
+    /**
+     * Return true if the given literal has a non-empty lang tag
+     * @param l
+     * @return True if the lang tag of <code>l</code> is non-null and
+     * non-empty
+     */
+    protected boolean hasLangTag( Literal l ) {
+        String t = l.getLanguage();
+        return t != null && t.length() > 0;
+    }
+
+
+    /**
+     * Determine the order between two typed literals, which may have different
+     * or identical datatypes.
+     * @param l1
+     * @param l2
+     * @return Less than zero if typed literal <code>l1</code> should precede
+     * typed literal <code>l2</code> in the order
+     */
+    protected int compareTypedLiterals( Literal l1, Literal l2 ) {
+        if (l1.getDatatype().equals( l2.getDatatype() )) {
+            // types are the same
+            return compareSameTypeLiterals( l1, l2 );
+        }
+        else {
+            return l1.getDatatypeURI().compareTo( l2.getDatatypeURI() );
+        }
+    }
+
+    /**
+     * Determine the order between two typed literals, which are known to have
+     * identical datatypes.
+     * @param l1
+     * @param l2
+     * @return Less than zero if typed literal <code>l1</code> should precede
+     * typed literal <code>l2</code> in the order
+     */
+    protected int compareSameTypeLiterals( Literal l1, Literal l2 ) {
+        Object v1 = l1.getValue();
+        Object v2 = l2.getValue();
+        RDFDatatype d = l1.getDatatype();
+
+        // certain well-known types we compare by value
+        if (d.equals( XSDDatatype.XSDboolean )) {
+            return ((Boolean) v1).compareTo( ((Boolean) v2 ) );
+        }
+        else if (d.equals( XSDDatatype.XSDbyte ) ||
+                 d.equals( XSDDatatype.XSDshort ) ||
+                 d.equals( XSDDatatype.XSDint ) ||
+                 d.equals( XSDDatatype.XSDlong ) ||
+                 d.equals( XSDDatatype.XSDinteger ) ||
+                 d.equals( XSDDatatype.XSDdecimal )) {
+            return compareNonFPNumbers( (Number) v1, (Number) v2 );
+        }
+        else if (d.equals( XSDDatatype.XSDdouble ) ||
+                 d.equals( XSDDatatype.XSDfloat )) {
+            return compareFPNumbers( (Number) v1, (Number) v2 );
+        }
+        else if (d.equals( XSDDatatype.XSDtime ) ||
+                 d.equals( XSDDatatype.XSDdate ) ||
+                 d.equals( XSDDatatype.XSDdateTime )) {
+            return ((XSDDateTime) v1).compareTo( (XSDDateTime) v2 );
+        }
+
+        // default: compare lexical string images
+        return l1.getLexicalForm().compareTo( l2.getLexicalForm() );
+    }
+
+    /**
+     * Determine the order between two non-floating point numbers, which
+     * may be integers, longs or big-decimals.
+     * @param n1 A non-FP number object
+     * @param n2 A non-FP number object
+     * @return Less than one if n1 is less than n2
+     */
+    protected int compareNonFPNumbers( Number n1, Number n2 ) {
+        if (n1 instanceof BigDecimal && n2 instanceof BigDecimal) {
+            return ((BigDecimal) n1).compareTo( (BigDecimal) n2);
+        }
+        else if (n1 instanceof BigDecimal) {
+            return ((BigDecimal) n1).compareTo( new BigDecimal( n2.longValue() ) );
+        }
+        else if (n2 instanceof BigDecimal) {
+            return new BigDecimal( n1.longValue() ).compareTo( (BigDecimal) n2 );
+        }
+        else {
+            long delta = n1.longValue() - n2.longValue();
+            return (delta > Integer.MAX_VALUE) ? Integer.MAX_VALUE :
+                            ((delta < Integer.MIN_VALUE) ? Integer.MIN_VALUE : (int) delta);
+        }
+    }
+
+    /**
+     * Determine the order between two floating point numbers, which
+     * may be floats or doubles
+     * @param n1 An FP number object
+     * @param n2 An FP number object
+     * @return Less than one if n1 is less than n2
+     */
+    protected int compareFPNumbers( Number n1, Number n2 ) {
+        if (n1 instanceof Double) {
+            if (n2 instanceof Double) {
+                return ((Double) n1).compareTo( (Double) n2 );
+            }
+            else {
+                return ((Double) n1).compareTo( new Double( n2.doubleValue() ));
+            }
+        }
+        else if (n2 instanceof Double) {
+            return new Double( n1.doubleValue() ).compareTo( (Double) n2 );
+        }
+        else {
+            return ((Float) n1).compareTo( (Float) n2 );
+        }
     }
 
 
